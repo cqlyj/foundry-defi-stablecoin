@@ -137,12 +137,27 @@ contract DSCEngine is ReentrancyGuard {
         }
     }
 
-    function redeemCollateralForDsc() external {}
+    /**
+     *
+     * @param tokenCollateralAddress The address of the token to redeem as collateral
+     * @param amountCollateral The amount of the token to redeem as collateral
+     * @param amountDscToBurn The amount of DSC to burn
+     * @notice This function burns DSC and redeems collateral in one transaction
+     */
+    function redeemCollateralForDsc(
+        address tokenCollateralAddress,
+        uint256 amountCollateral,
+        uint256 amountDscToBurn
+    ) external {
+        burnDsc(amountDscToBurn);
+        // redeemCollateral already checks health factor
+        redeemCollateral(tokenCollateralAddress, amountCollateral);
+    }
 
     function redeemCollateral(
         address tokenCollateralAddress,
         uint256 amountCollateral
-    ) external moreThanZero(amountCollateral) nonReentrant {
+    ) public moreThanZero(amountCollateral) nonReentrant {
         s_collateralDeposited[msg.sender][
             tokenCollateralAddress
         ] -= amountCollateral;
@@ -164,7 +179,7 @@ contract DSCEngine is ReentrancyGuard {
 
         _revertIfHealthFactorIsBroken(msg.sender);
     }
- 
+
     /**
      *
      * @param amountDscToMint The amount of DSC to mint
@@ -181,7 +196,15 @@ contract DSCEngine is ReentrancyGuard {
         }
     }
 
-    function burnDsc() external {}
+    function burnDsc(uint256 amount) public moreThanZero(amount) {
+        s_DSCMinted[msg.sender] -= amount;
+        bool success = i_dsc.transferFrom(msg.sender, address(this), amount);
+        if (!success) {
+            revert DSCEngine__TransferFailed();
+        }
+        i_dsc.burn(amount);
+        _revertIfHealthFactorIsBroken(msg.sender); // I don't think this would ever happen...
+    }
 
     function liquidate() external {}
 
