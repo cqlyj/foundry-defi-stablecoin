@@ -40,6 +40,11 @@ contract Invariants is StdInvariant, Test {
         uint256 wethValue = engine.getUsdValue(weth, totalWethDeposited);
         uint256 btcValue = engine.getUsdValue(wbtc, totalBtcDeposited);
 
+        console.log("Total supply: ", totalSupply);
+        console.log("Total WETH deposited: ", totalWethDeposited);
+        console.log("Total BTC deposited: ", totalBtcDeposited);
+        console.log("WETH value: ", wethValue);
+        console.log("BTC value: ", btcValue);
         console.log("Times mint is called: ", handler.timesMintIsCalled());
 
         assert(totalSupply <= wethValue + btcValue);
